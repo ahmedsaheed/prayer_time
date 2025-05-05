@@ -15,7 +15,7 @@ struct Prayer_TimeApp: App {
 
     var body: some Scene {
         MenuBarExtra {
-            TextContent("Quit")
+            TextContent("Quit", times: prayerTimes)
         } label: {
             HStack {
                 if let timings = prayerTimes {
@@ -54,8 +54,51 @@ struct Prayer_TimeApp: App {
 
 }
 
-func TextContent(_ title: String) -> some View {
+func Prayers(nextPrayerTime: String, name: String, time: String) -> some View {
+    Text("\(name) : \(time)")
+        .foregroundColor(time == nextPrayerTime ? .blue : .primary)
+
+}
+
+func PrayerDropDown(times: Timings? = nil) -> some View {
     HStack {
+        let nextPrayer: (name: String, time: String, icon: String)? =
+            getNextPrayerTime(from: times!)
+        Prayers(
+            nextPrayerTime: nextPrayer!.time,
+            name: "Fajr",
+            time: times!.fajr
+        )
+        Divider()
+        Prayers(
+            nextPrayerTime: nextPrayer!.time,
+            name: "Dhuhr",
+            time: times!.dhuhr
+        )
+        Divider()
+        Prayers(nextPrayerTime: nextPrayer!.time, name: "Asr", time: times!.asr)
+        Divider()
+        Prayers(
+            nextPrayerTime: nextPrayer!.time,
+            name: "Maghrib",
+            time: times!.maghrib
+        )
+        Divider()
+        Prayers(
+            nextPrayerTime: nextPrayer!.time,
+            name: "Isha",
+            time: times!.isha
+        )
+
+    }
+}
+
+func TextContent(_ title: String, times: Timings? = nil) -> some View {
+    HStack {
+        if let times {
+            PrayerDropDown(times: times)
+        }
+        Divider()
         Button(action: onQuitClick) {
             Label("Open Settings", systemImage: "folder.badge.plus")
         }
