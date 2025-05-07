@@ -7,26 +7,36 @@
 
 import SwiftUI
 
+
+
 @main
 struct Prayer_TimeApp: App {
     @State var currentNumber: String = "1"
     @State var today: Date = Date()
     @State private var prayerTimes: Timings?
-
+    @State private var upComingPrayerTimeRemaining: Int?
+    @StateObject var viewModel = PrayerCountdownViewModel()
+    let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     var body: some Scene {
         MenuBarExtra {
-            TextContent("Quit", times: prayerTimes)
+            DropDown(times: prayerTimes)
         } label: {
             HStack {
                 if let timings = prayerTimes {
-                    let nextPrayer:
-                        (name: String, time: String, icon: String)? =
-                            getNextPrayerTime(from: timings)
-                    let nextPrayerNameAndTime =
-                        "\(nextPrayer?.name ?? "") : \(nextPrayer?.time ?? "Loading...")"
+                    let nextPrayer: (name: String, time: String, icon: String)? = getNextPrayerTime(from: timings)
+                    let nextPrayerNameAndTime = "\(nextPrayer?.name ?? "") : \(viewModel.countdownText)"
                     VStack {
                         Image(systemName: nextPrayer?.icon ?? "")
-                        Text(nextPrayerNameAndTime)
+                        Text("\(nextPrayerNameAndTime)")
+                    }.onAppear {
+                        viewModel.startCountdown(to: nextPrayer?.time ?? "0")
+                    }.onChange(of: viewModel.countdownText) { oldValue, newValue in
+                        if oldValue == "00:00:00" {
+                            print("Next prayer time is here")
+                            // @TODO: call adhan
+                            let nextPrayer: (name: String, time: String, icon: String)? = getNextPrayerTime(from: prayerTimes!)
+                            viewModel.startCountdown(to: nextPrayer?.time ?? "0")
+                        }
                     }
                 } else {
                     Text("Fetching Prayer Times...")
@@ -36,17 +46,18 @@ struct Prayer_TimeApp: App {
                             }
                         }
                 }
-
             }
         }
     }
-
+    
+    
     func loadPrayerTimes() async {
         do {
             prayerTimes = try await fetchPrayerTimes(
                 date: today,
                 prayerTimes: prayerTimes
             )
+            
         } catch {
             print("Error fetching prayer times: \(error)")
         }
@@ -57,7 +68,6 @@ struct Prayer_TimeApp: App {
 func Prayers(nextPrayerTime: String, name: String, time: String) -> some View {
     Text("\(name) : \(time)")
         .foregroundColor(time == nextPrayerTime ? .blue : .primary)
-
 }
 
 func PrayerDropDown(times: Timings? = nil) -> some View {
@@ -93,7 +103,7 @@ func PrayerDropDown(times: Timings? = nil) -> some View {
     }
 }
 
-func TextContent(_ title: String, times: Timings? = nil) -> some View {
+func DropDown(times: Timings? = nil) -> some View {
     HStack {
         if let times {
             PrayerDropDown(times: times)
