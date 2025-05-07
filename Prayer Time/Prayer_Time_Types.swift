@@ -5,6 +5,12 @@
 //  Created by Ahmed, Ahmed on 05/05/2025.
 //
 
+struct Prayer {
+    var name: String = ""
+    var time: String = ""
+    var icon: String = ""
+}
+
 struct PrayerTimesResponse: Codable {
     let code: Int
     let status: String

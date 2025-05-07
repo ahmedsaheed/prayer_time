@@ -5,6 +5,8 @@
 //  Created by Ahmed, Ahmed on 05/05/2025.
 //
 import Foundation
+import AVFoundation
+
 
 let TODAY_DATE = getTodaysDate()
 let DATA_SOURCE = "https://api.aladhan.com/v1/timingsByAddress/\(TODAY_DATE)?address=Cork,Ireland&method=8&tune=2,3,4,5,2,3,4,5,-3"
@@ -75,4 +77,18 @@ func fetchPrayerTimes(
     let (data, _) = try await URLSession.shared.data(from: PrayerTimeURL)
     let decoded = try JSONDecoder().decode(PrayerTimesResponse.self, from: data)
     return decoded.data.timings
+}
+
+
+func playSounds(_ soundFileName : String, audioPlayer: inout AVAudioPlayer) {
+    guard let soundURL = Bundle.main.url(forResource: soundFileName, withExtension: nil) else {
+        fatalError("Unable to find \(soundFileName) in bundle")
+    }
+
+    do {
+        audioPlayer = try AVAudioPlayer(contentsOf: soundURL)
+    } catch {
+        print(error.localizedDescription)
+    }
+    audioPlayer.play()
 }

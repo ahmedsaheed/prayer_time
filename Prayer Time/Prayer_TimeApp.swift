@@ -6,37 +6,40 @@
 //
 
 import SwiftUI
-
-
+import AVFoundation
 
 @main
+
 struct Prayer_TimeApp: App {
-    @State var currentNumber: String = "1"
     @State var today: Date = Date()
     @State private var prayerTimes: Timings?
-    @State private var upComingPrayerTimeRemaining: Int?
     @StateObject var viewModel = PrayerCountdownViewModel()
+    @State private var prayer:Prayer = Prayer()
+    @State var audioPlayer: AVAudioPlayer!
+    
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     var body: some Scene {
         MenuBarExtra {
             DropDown(times: prayerTimes)
         } label: {
             HStack {
-                if let timings = prayerTimes {
-                    let nextPrayer: (name: String, time: String, icon: String)? = getNextPrayerTime(from: timings)
-                    let nextPrayerNameAndTime = "\(nextPrayer?.name ?? "") : \(viewModel.countdownText)"
+                if let _ = prayerTimes {
+                    let nextPrayerNameAndTime = "\(prayer.name) : \(viewModel.countdownText)"
                     VStack {
-                        Image(systemName: nextPrayer?.icon ?? "")
+                        Image(systemName: prayer.icon)
                         Text("\(nextPrayerNameAndTime)")
                     }.onAppear {
-                        viewModel.startCountdown(to: nextPrayer?.time ?? "0")
+                        viewModel.startCountdown(to: prayer.time)
                     }.onChange(of: viewModel.countdownText) { oldValue, newValue in
-                        if oldValue == "00:00:00" {
+                        if newValue == "00:00:00" {
                             print("Next prayer time is here")
-                            // @TODO: call adhan
-                            let nextPrayer: (name: String, time: String, icon: String)? = getNextPrayerTime(from: prayerTimes!)
-                            viewModel.startCountdown(to: nextPrayer?.time ?? "0")
+                            // @TODO: call adhan - find adhan mp3
+                            // playSounds("adhan.mp3", audioPlayer: &audioPlayer)
+                            updateNextPrayer(time: prayerTimes!)
+                            viewModel.startCountdown(to: prayer.time)
+                            
                         }
+//                        print("Countdown updated from: \(oldValue) to \(newValue)")
                     }
                 } else {
                     Text("Fetching Prayer Times...")
@@ -57,10 +60,17 @@ struct Prayer_TimeApp: App {
                 date: today,
                 prayerTimes: prayerTimes
             )
-            
+            updateNextPrayer(time: prayerTimes!)
         } catch {
             print("Error fetching prayer times: \(error)")
         }
+    }
+    
+    func updateNextPrayer(time: Timings) {
+        let nextInLine : (name: String, time: String, icon: String)? = getNextPrayerTime(from: prayerTimes!)
+        prayer.name = nextInLine?.name ?? ""
+        prayer.time = nextInLine?.time ?? ""
+        prayer.icon = nextInLine?.icon ?? ""
     }
 
 }
